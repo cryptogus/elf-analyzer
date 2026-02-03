@@ -44,4 +44,37 @@ fn main() {
         let name = elf.shdr_strtab.get_at(sh.sh_name).unwrap_or("???");
         println!("{:<20} {:>12} 0x{:08x}", name, sh.sh_size, sh.sh_addr);
     }
+
+    // Symbol
+    const TOP_NUM: usize = 10;
+    let elf = Elf::parse(&data).unwrap();
+    let funcs = symbol::get_functions(&elf, TOP_NUM);
+
+    println!("\n=== Top {} Functions ===", TOP_NUM);
+    println!("{:40} {:>10} {:>12}", "Name", "Size", "Addr");
+    println!("{}", "-".repeat(64));
+
+    for f in &funcs {
+        let name = if f.name.len() > 38 {
+            format!("{}...", &f.name[..35]) // Create new String
+        } else {
+            f.name.clone() // Copy String
+        };
+        println!("{:<40} {:>10} 0x{:08x}", name, f.size, f.addr);
+    }
+
+    // Memory Usage
+    println!("\n=== Memory Usage ===");
+    let sections = [".text", ".rodata", ".data", ".bss"];
+    for name in sections {
+        if let Some(sh) = elf
+            .section_headers
+            .iter()
+            .find(|s| elf.shdr_strtab.get_at(s.sh_name) == Some(name))
+        {
+            let bar_len = (sh.sh_size as usize / 1024).min(40).max(1);
+            let bar = "█".repeat(bar_len);
+            println!("{:<10} {:>8} bytes {}", name, sh.sh_size, bar);
+        }
+    }
 }
