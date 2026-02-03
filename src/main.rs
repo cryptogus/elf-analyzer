@@ -3,6 +3,7 @@ mod symbol;
 use goblin::elf::Elf;
 use std::env;
 use std::fs;
+use colored::*;
 
 fn main() {
     // // TEST args 1
@@ -26,8 +27,8 @@ fn main() {
     let elf = Elf::parse(&data).expect("Fail to parsing ELF");
 
     // Header information
-    println!("=== ELF Header ===");
-    println!("Entry point: 0x{:x}", elf.entry);
+    println!("{}","=== ELF Header ===".cyan().bold());
+    println!("Entry point: {}", format!("0x{:x}", elf.entry).yellow());
     println!("Machine: {:?}", elf.header.e_machine);
     println!("Type: {:?}", elf.header.e_type);
     println!(
@@ -37,7 +38,7 @@ fn main() {
 
     // Section
     println!("\n=== Sections ===");
-    println!("{:<20} {:>12} {:>12}", "Name", "Size", "Addr");
+    println!("{:<20} {:>12} {:>12}", "Name".bold(), "Size".bold(), "Addr".bold());
     println!("{}", "-".repeat(64));
 
     for sh in &elf.section_headers {
@@ -64,17 +65,22 @@ fn main() {
     }
 
     // Memory Usage
-    println!("\n=== Memory Usage ===");
+    println!("\n{}", "=== Memory Usage ===".cyan().bold());
     let sections = [".text", ".rodata", ".data", ".bss"];
     for name in sections {
-        if let Some(sh) = elf
-            .section_headers
-            .iter()
-            .find(|s| elf.shdr_strtab.get_at(s.sh_name) == Some(name))
+        if let Some(sh) = elf.section_headers.iter()
+            .find(|s| elf.shdr_strtab.get_at(s.sh_name) == Some(name)) 
         {
             let bar_len = (sh.sh_size as usize / 1024).min(40).max(1);
             let bar = "█".repeat(bar_len);
-            println!("{:<10} {:>8} bytes {}", name, sh.sh_size, bar);
+            let colored_bar: ColoredString = match name {
+                ".text" => bar.blue(),
+                ".rodata" => bar.cyan(),
+                ".data" => bar.green(),
+                ".bss" => bar.yellow(),
+                _ => bar.normal(),
+            };
+            println!("{:<10} {:>8} bytes {}", name, sh.sh_size, colored_bar);
         }
     }
 }

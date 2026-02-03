@@ -1,7 +1,7 @@
 # ELF analyzer
 
 ```bash
-$ cargo add goblin clap
+$ cargo add goblin clap colored
 # 수동으로 Cargo.toml 직접 편집하는 것과 동일
 ```
 
